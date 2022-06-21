@@ -3,6 +3,8 @@ import math
 
 
 def start():
+    # -------- handle 2-dimension Map -------
+
     # machine's note number: 1
     # player's note number: 2
     result = {
@@ -15,19 +17,11 @@ def start():
     def setValueMap(map, x, y, value):
         map[x][y] = value
 
-    def getUserChoice():
-        x = int(input('Enter your x position: '))
-        y = int(input('Enter your y position: '))
-        return {
-            'x': x,
-            'y': y
-        }
-
-    def createMap():
+    def createMap(len):
         map = []
-        for i in range(3):
+        for i in range(len):
             temp = []
-            for j in range(3):
+            for j in range(len):
                 temp.append(0)
             map.append(temp)
         return map
@@ -39,57 +33,85 @@ def start():
             print()
         return map
 
-    def checkWin(map):
-        def isOne(num):
-            if num == 1:
+    def checkWin(map, prevChoice):
+        def isInRange(map, x, y):
+            if 0 <= x and x < len(map) and 0 <= y and y < len(map[0]):
                 return True
+            return False
 
-        def isTwo(num):
-            if num == 2:
-                return True
+        def isWin(array, winLen, checkNumber):
+            count = 0
+            for i in range(len(array)):
+                if array[i] == checkNumber:
+                    count = count + 1
+                    if count == winLen:
+                        return True
+                else:
+                    count = 0
+            return False
 
-        # check machine win
-        for i in range(3):
-            if isOne(map[i][0]) and isOne(map[i][1]) and isOne(map[i][2]):
-                return result["machineWinValue"]
-        for i in range(3):
-            if isOne(map[0][i]) and isOne(map[1][i]) and isOne(map[2][i]):
-                return result["machineWinValue"]
-        if isOne(map[0][0]) and isOne(map[1][1]) and isOne(map[2][2]):
-            return result["machineWinValue"]
-        if isOne(map[0][2]) and isOne(map[1][1]) and isOne(map[2][0]):
-            return result["machineWinValue"]
-        # check player win
-        for i in range(3):
-            if isTwo(map[i][0]) and isTwo(map[i][1]) and isTwo(map[i][2]):
-                return result["playerWinValue"]
-        for i in range(3):
-            if isTwo(map[0][i]) and isTwo(map[1][i]) and isTwo(map[2][i]):
-                return result["playerWinValue"]
-        if isTwo(map[0][0]) and isTwo(map[1][1]) and isTwo(map[2][2]):
-            return result["playerWinValue"]
-        if isTwo(map[0][2]) and isTwo(map[1][1]) and isTwo(map[2][0]):
-            return result["playerWinValue"]
+        if len(map) == 3:
+            winLen = 3
+        elif len(map) == 5:
+            winLen = 4
+
+        if map[prevChoice['x']][prevChoice['y']] == 1:
+            checkNumber = 1
+            winString = "machineWinValue"
+        elif map[prevChoice['x']][prevChoice['y']] == 2:
+            checkNumber = 2
+            winString = "playerWinValue"
+
+        x = prevChoice['x']
+        y = prevChoice['y']
+        horizontalArray = []
+        for i in range(-(winLen - 1), winLen, 1):
+            if isInRange(map, x, y+i):
+                horizontalArray.append(map[x][y+i])
+        if len(horizontalArray) >= winLen and isWin(horizontalArray, winLen, checkNumber):
+            return result[winString]
+
+        verticalArray = []
+        for i in range(-(winLen - 1), winLen, 1):
+            if isInRange(map, x+i, y):
+                verticalArray.append(map[x+i][y])
+        if len(verticalArray) >= winLen and isWin(verticalArray, winLen, checkNumber):
+            return result[winString]
+
+        rightDownArray = []
+        for i in range(-(winLen - 1), winLen, 1):
+            if isInRange(map, x+i, y+i):
+                rightDownArray.append(map[x+i][y+i])
+        if len(rightDownArray) >= winLen and isWin(rightDownArray, winLen, checkNumber):
+            return result[winString]
+
+        leftDownlArray = []
+        for i in range(-(winLen - 1), winLen, 1):
+            if isInRange(map, x+i, y-i):
+                leftDownlArray.append(map[x+i][y-i])
+        if len(leftDownlArray) >= winLen and isWin(leftDownlArray, winLen, checkNumber):
+            return result[winString]
+
         # check if game is not finished
-        for i in range(3):
-            for j in range(3):
+        for i in range(len(map)):
+            for j in range(len(map[0])):
                 if map[i][j] == 0:
                     return result["notFinished"]
         # return draw result
         return result["drawValue"]
 
-    def findMin(map):  # player's turn
-        gameResult = checkWin(map)
+    def findMin(map, prevChoice):  # player's turn
+        gameResult = checkWin(map, prevChoice)
         if gameResult != result["notFinished"]:
             return [gameResult]
 
         minValue = 2
         point = {}
-        for i in range(3):
-            for j in range(3):
+        for i in range(len(map)):
+            for j in range(len(map[0])):
                 if map[i][j] == 0:
                     setValueMap(map, i, j, 2)
-                    temp = findMax(map)[0]
+                    temp = findMax(map, {'x': i, 'y': j})[0]
                     if temp < minValue:
                         minValue = temp
                         point['x'] = i
@@ -97,18 +119,18 @@ def start():
                     setValueMap(map, i, j, 0)
         return [minValue, point]
 
-    def findMax(map):  # machine's turn
-        gameResult = checkWin(map)
+    def findMax(map, prevChoice):  # machine's turn
+        gameResult = checkWin(map, prevChoice)
         if gameResult != result["notFinished"]:
             return [gameResult]
 
         maxValue = -3
         point = {}
-        for i in range(3):
-            for j in range(3):
+        for i in range(len(map)):
+            for j in range(len(map)):
                 if map[i][j] == 0:
                     setValueMap(map, i, j, 1)
-                    temp = findMin(map)[0]
+                    temp = findMin(map, {'x': i, 'y': j})[0]
                     if temp > maxValue:
                         maxValue = temp
                         point['x'] = i
@@ -126,7 +148,7 @@ def start():
 
     def createQuinxi():
         quinxi = turtle.Turtle()
-        quinxi.speed(10000)
+        quinxi.speed(100)
         quinxi.color(outlineColor)
         quinxi.fillcolor(fillColor)
         quinxi.pensize(5)
@@ -166,8 +188,8 @@ def start():
         quinxi.color(outlineColor)
 
     def circleMap(quinxi, len, x, y):
-        quinxi.color(circleColor)
         goTotPoint(quinxi, len, x, y)
+        quinxi.color(circleColor)
         quinxi.penup()
         quinxi.setheading(-45)
         quinxi.forward((math.sqrt(2) / 2) * squareWidth)
@@ -198,20 +220,20 @@ def start():
             xIndex = len
             yIndex = len
             for i in range(len):
-                if (-3/2+i) * squareWidth < x and x < (-3/2+i+1)*squareWidth:
+                if (-len/2+i) * squareWidth < x and x < (-len/2+i+1)*squareWidth:
                     yIndex = i
                     break
             if yIndex == len:
                 print('Invalid click action!')
-                turtle.bye()
+                turtle.exitonclick()
 
             for i in range(len):
-                if (-3/2+i) * squareWidth < y and y < (-3/2+i+1)*squareWidth:
+                if (-len/2+i) * squareWidth < y and y < (-len/2+i+1)*squareWidth:
                     xIndex = len - i - 1
                     break
             if xIndex == len:
                 print('Invalid click action!')
-                quinxi.bye()
+                turtle.exitonclick()
 
             userPoint = {
                 'x': xIndex,
@@ -220,52 +242,59 @@ def start():
             handlMachineTurn(userPoint)
 
         def handlMachineTurn(userChoice):
-            printMap(map)
-            # userChoice = getUserChoice()
             tickMap(quinxi, len, userChoice['x'], userChoice['y'])
             setValueMap(map, userChoice['x'], userChoice['y'], 2)
-            gameResult = checkWin(map)
+            printMap(map)
+            gameResult = checkWin(map, userChoice)
             if gameResult != result["notFinished"]:
                 printMap(map)
-                quinxi.bye()
                 match gameResult:
                     case -1:
                         print('You win!')
+                        turtle.exitonclick()
+                        return
 
                     case 0:
                         print('draw!')
+                        turtle.exitonclick()
+                        return
 
                     case 1:
                         print('you lose!')
+                        turtle.exitonclick()
+                        return
 
-            machineChoice = findMax(map)[1]
+            temp = findMax(map, userChoice)
+            machineChoice = temp[1]
             setValueMap(map, machineChoice['x'], machineChoice['y'], 1)
             circleMap(quinxi, len, machineChoice['x'], machineChoice['y'])
-            gameResult = checkWin(map)
+            gameResult = checkWin(map, machineChoice)
 
             if gameResult != result["notFinished"]:
                 printMap(map)
-                turtle.bye()
+                turtle.exitonclick()
                 match gameResult:
                     case -1:
                         print('You win!')
+                        turtle.exitonclick()
+                        return
                     case 0:
                         print('draw!')
+                        turtle.exitonclick()
+                        return
                     case 1:
                         print('you lose!')
+                        turtle.exitonclick()
+                        return
 
         quinxi.getscreen().onclick(moveTurtleToCursor)
 
-    def play():
-        len = 3
-        map = createMap()
+    def play(len):
+        map = createMap(len)
         quinxi = createQuinxi()
         drawMap(quinxi, len)
         recieveUserPoint(map, quinxi, len)
         turtle.mainloop()
-
-    def play5x5Map():
-        pass
 
     def init():
         userChoice = 0
@@ -276,9 +305,9 @@ def start():
             userChoice = int(input('Enter your choice: '))
             match userChoice:
                 case 1:
-                    play()
+                    play(3)
                 case 2:
-                    play5x5Map()
+                    play(5)
                 case 3:
                     print('Good bye!')
 
@@ -287,5 +316,3 @@ def start():
 
 if __name__ == "__main__":
     start()
-
-# Ngoc Nhi Nguyen Thi
