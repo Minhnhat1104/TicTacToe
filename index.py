@@ -100,43 +100,60 @@ def start():
         # return draw result
         return result["drawValue"]
 
-    def findMin(map, prevChoice):  # player's turn
+    def findMin(map, prevChoice, a, b):  # player's turn
         gameResult = checkWin(map, prevChoice)
         if gameResult != result["notFinished"]:
-            return [gameResult]
+            return [gameResult, {}, a, b]
 
-        minValue = 2
+        v = 999
+        # minValue = 2
         point = {}
         for i in range(len(map)):
             for j in range(len(map[0])):
                 if map[i][j] == 0:
                     setValueMap(map, i, j, 2)
-                    temp = findMax(map, {'x': i, 'y': j})[0]
-                    if temp < minValue:
-                        minValue = temp
+                    temp = findMax(map, {'x': i, 'y': j}, a, b)[0]
+                    v = min(v, temp)
+                    if v > temp:
                         point['x'] = i
                         point['y'] = j
+                        v = temp
+                    if v <= a:
+                        point['x'] = i
+                        point['y'] = j
+                        setValueMap(map, i, j, 0)
+                        return [v]
+                    b = min(b, v)
                     setValueMap(map, i, j, 0)
-        return [minValue, point]
+        return [v, point]
 
-    def findMax(map, prevChoice):  # machine's turn
+    def findMax(map, prevChoice, a, b):  # machine's turn
         gameResult = checkWin(map, prevChoice)
         if gameResult != result["notFinished"]:
-            return [gameResult]
-
-        maxValue = -3
+            return [gameResult, {}, a, b]
+        v = -999
+        # maxValue = -3
         point = {}
         for i in range(len(map)):
             for j in range(len(map)):
                 if map[i][j] == 0:
                     setValueMap(map, i, j, 1)
-                    temp = findMin(map, {'x': i, 'y': j})[0]
-                    if temp > maxValue:
-                        maxValue = temp
+                    temp = findMin(map, {'x': i, 'y': j}, a, b)[0]
+
+                    # v = max(v, temp)
+                    if v < temp:
+                        v = temp
                         point['x'] = i
                         point['y'] = j
+
+                    if v >= b:
+                        point['x'] = i
+                        point['y'] = j
+                        setValueMap(map, i, j, 0)
+                        return [v]
+                    a = max(a, v)
                     setValueMap(map, i, j, 0)
-        return [maxValue, point]
+        return [v, point]
 
     # --------- handle visualization --------
 
@@ -264,7 +281,10 @@ def start():
                         turtle.exitonclick()
                         return
 
-            temp = findMax(map, userChoice)
+            a = -999
+            b = 999
+            temp = findMax(map, userChoice, a, b)
+            print(temp)
             machineChoice = temp[1]
             setValueMap(map, machineChoice['x'], machineChoice['y'], 1)
             circleMap(quinxi, len, machineChoice['x'], machineChoice['y'])
@@ -298,18 +318,17 @@ def start():
 
     def init():
         userChoice = 0
-        while userChoice != 3:
-            print('1) Map 3x3.')
-            print('2) Map 5x5.')
-            print('3) Quit game')
-            userChoice = int(input('Enter your choice: '))
-            match userChoice:
-                case 1:
-                    play(3)
-                case 2:
-                    play(5)
-                case 3:
-                    print('Good bye!')
+        print('1) Map 3x3.')
+        print('2) Map 5x5.')
+        print('3) Quit game')
+        userChoice = int(input('Enter your choice: '))
+        match userChoice:
+            case 1:
+                play(3)
+            case 2:
+                play(5)
+            case 3:
+                print('Good bye!')
 
     init()
 
