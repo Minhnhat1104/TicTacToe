@@ -7,6 +7,7 @@ def start():
 
     # machine's note number: 1
     # player's note number: 2
+    # turtle: quinxi
     result = {
         "playerWinValue": -1,
         "drawValue": 0,
@@ -227,6 +228,14 @@ def start():
                 drawRectangle(quinxi, startPoint['x'], startPoint['y'])
 
     def recieveUserPoint(map, quinxi, len):
+        def isTickBefore(choice):
+            if map[choice['x']][choice['y']] == 0:
+                return False
+            return True
+
+        def handleBye():
+            quinxi.bye()
+
         def moveTurtleToCursor(x, y):
             quinxi.penup()
             quinxi.goto(x, y)
@@ -242,7 +251,7 @@ def start():
                     break
             if yIndex == len:
                 print('Invalid click action!')
-                turtle.exitonclick()
+                return
 
             for i in range(len):
                 if (-len/2+i) * squareWidth < y and y < (-len/2+i+1)*squareWidth:
@@ -250,21 +259,24 @@ def start():
                     break
             if xIndex == len:
                 print('Invalid click action!')
-                turtle.exitonclick()
+                return
 
             userPoint = {
                 'x': xIndex,
                 'y': yIndex
             }
+
+            if isTickBefore(userPoint):
+                print('This space is choosen before!')
+                return
+
             handlMachineTurn(userPoint)
 
         def handlMachineTurn(userChoice):
             tickMap(quinxi, len, userChoice['x'], userChoice['y'])
             setValueMap(map, userChoice['x'], userChoice['y'], 2)
-            printMap(map)
             gameResult = checkWin(map, userChoice)
             if gameResult != result["notFinished"]:
-                printMap(map)
                 match gameResult:
                     case -1:
                         print('You win!')
@@ -284,15 +296,11 @@ def start():
             a = -999
             b = 999
             temp = findMax(map, userChoice, a, b)
-            print(temp)
             machineChoice = temp[1]
             setValueMap(map, machineChoice['x'], machineChoice['y'], 1)
             circleMap(quinxi, len, machineChoice['x'], machineChoice['y'])
             gameResult = checkWin(map, machineChoice)
-
             if gameResult != result["notFinished"]:
-                printMap(map)
-                turtle.exitonclick()
                 match gameResult:
                     case -1:
                         print('You win!')
